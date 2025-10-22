@@ -1,181 +1,500 @@
 # P2A ASEAN Core System Module
-Chắc chắn rồi. Dưới đây là phân tích chi tiết về `enum` cho các vai trò người dùng (roles), cách tổ chức chúng, và giải thích vai trò của từng role trong mỗi module chức năng của dự án.
 
-### Phần 1: Enum Tổng hợp cho Toàn bộ Hệ thống
+## 📋 Mô tả
 
-Cách tiếp cận tốt nhất và được khuyến nghị là sử dụng **một `enum` duy nhất** để định nghĩa tất cả các vai trò có thể có trong hệ thống. Điều này giúp quản lý tập trung, đảm bảo tính nhất quán và dễ dàng cho việc phân quyền.
+Module Core System là hệ thống lõi của P2A ASEAN Platform, cung cấp các chức năng cơ bản:
+- 🔐 Authentication & Authorization với JWT
+- 👥 User Management
+- ✉️ Email Verification
+- 🔄 Refresh Token
+- 🛡️ Role-based Access Control (RBAC)
+- 🌍 Internationalization (i18n) - 5 ngôn ngữ ASEAN
 
-Mỗi người dùng trong cơ sở dữ liệu sẽ được gán **một và chỉ một** vai trò từ `enum` này.
+## 🏗️ Kiến trúc
 
-**File: `src/common/enums/user-role.enum.ts`**
-```typescript
-export enum UserRole {
-  /**
-   * Quản trị viên tối cao của hệ thống P2A.
-   * Có quyền truy cập mọi thứ, đặc biệt là các dashboard quản trị và duyệt nội dung.
-   */
-  ADMIN = 'admin',
+### Công nghệ sử dụng
+- **Framework**: NestJS 10.x
+- **Database**: PostgreSQL 15 với TypeORM
+- **Authentication**: JWT (Passport.js)
+- **Email**: Nodemailer
+- **Validation**: class-validator, class-transformer
+- **Documentation**: Swagger/OpenAPI
+- **i18n**: nestjs-i18n (Vietnamese, English, Thai, Indonesian, Malay)
 
-  /**
-   * Đại diện cho một trường Đại học.
-   * Chịu trách nhiệm đăng tải thông tin về trường, khóa học, chương trình trao đổi.
-   */
-  UNIVERSITY = 'university',
+### Cấu trúc thư mục
 
-  /**
-   * Đại diện cho một Doanh nghiệp/Nhà tuyển dụng.
-   * Chịu trách nhiệm đăng hồ sơ công ty, tin tuyển dụng, tin thực tập.
-   */
-  COMPANY = 'company',
+```
+src/
+├── common/                    # Shared modules
+│   ├── decorators/           # Custom decorators
+│   ├── enums/               # Enums (UserRole, etc.)
+│   ├── exceptions/          # Custom exceptions
+│   ├── filters/             # Exception filters
+│   └── interceptors/        # Response interceptors
+├── config/                   # Configuration files
+│   ├── app.config.ts
+│   ├── database.config.ts   # Master/Slave config
+│   ├── jwt.config.ts
+│   └── mail.config.ts
+├── database/
+│   └── entities/            # TypeORM entities
+│       ├── user.entity.ts
+│       ├── user-profile.entity.ts
+│       ├── email-verification.entity.ts
+│       └── refresh-token.entity.ts
+├── modules/
+│   ├── auth/                # Authentication module
+│   │   ├── dto/
+│   │   ├── guards/
+│   │   ├── strategies/
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.module.ts
+│   ├── users/               # User management module
+│   │   ├── dto/
+│   │   ├── users.controller.ts
+│   │   ├── users.service.ts
+│   │   └── users.module.ts
+│   └── email/               # Email service module
+│       ├── email.service.ts
+│       └── email.module.ts
+├── health/                  # Health check
+├── app.module.ts
+└── main.ts
 
-  /**
-   * Vai trò dành cho sinh viên đang theo học.
-   * Tập trung vào việc tìm kiếm thực tập, việc làm, khóa học và dự án nghiên cứu.
-   */
-  STUDENT = 'student',
+```
 
-  /**
-   * Vai trò dành cho cựu sinh viên.
-   * Có thể hoạt động như một cá nhân tìm việc, hoặc đại diện cho doanh nghiệp của mình.
-   * Có các tính năng đặc biệt liên quan đến mạng lưới cựu sinh viên.
-   */
-  ALUMNI = 'alumni',
+## 🚀 Cài đặt
 
-  /**
-   * Vai trò dành cho các nhà nghiên cứu, giảng viên.
-   * Tập trung vào việc đăng tải, tìm kiếm dự án nghiên cứu và kết nối học thuật.
-   */
-  RESEARCHER = 'researcher',
+### Prerequisites
+- Node.js >= 20.x
+- PostgreSQL >= 15
+- npm hoặc yarn
 
-  /**
-   * Đại diện cho một công ty khởi nghiệp.
-   * Chịu trách nhiệm đăng hồ sơ startup để kêu gọi vốn hoặc tìm kiếm cố vấn.
-   */
-  STARTUP = 'startup',
+### Bước 1: Clone và cài đặt dependencies
+
+```bash
+cd p2a-core-system
+npm install
+```
+
+### Bước 2: Cấu hình Environment
+
+Copy file `.env.development` và chỉnh sửa các thông số:
+
+```bash
+cp .env.development .env
+```
+
+Các biến môi trường quan trọng:
+
+```env
+# Database
+DB_MASTER_HOST=localhost
+DB_MASTER_PORT=5432
+DB_MASTER_USERNAME=p2a_user
+DB_MASTER_PASSWORD=your_password
+DB_MASTER_DATABASE=p2a_core
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-refresh-secret-key
+
+# Email (SMTP)
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+```
+
+### Bước 3: Chạy ứng dụng
+
+**Development mode:**
+```bash
+npm run start:dev
+```
+
+**Production mode:**
+```bash
+npm run build
+npm run start:prod
+```
+
+**Với Docker:**
+```bash
+docker-compose up -d
+```
+
+## 📚 API Documentation
+
+Sau khi chạy ứng dụng ở development mode, truy cập Swagger UI tại:
+
+```
+http://localhost:3000/api/docs
+```
+
+## 🌍 Internationalization (i18n)
+
+Hệ thống hỗ trợ đa ngôn ngữ cho cộng đồng ASEAN:
+
+- 🇻🇳 **Vietnamese (vi)** - Tiếng Việt
+- 🇺🇸 **English (en)** - English (default)
+- 🇹🇭 **Thai (th)** - ไทย
+- 🇮🇩 **Indonesian (id)** - Bahasa Indonesia
+- 🇲🇾 **Malay (ms)** - Bahasa Melayu
+
+### Cách sử dụng:
+
+**1. Query Parameter:**
+```bash
+curl "http://localhost:3000/api/users/me?lang=vi"
+```
+
+**2. Accept-Language Header:**
+```bash
+curl -H "Accept-Language: vi-VN,vi;q=0.9,en;q=0.8" \
+  http://localhost:3000/api/users/me
+```
+
+**3. Response sẽ tự động translate (chỉ khi có lỗi):**
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Email không hợp lệ",  // Vietnamese
+  "timestamp": "2025-10-21T10:30:00.000Z"
 }
 ```
 
-**Tại sao chỉ dùng một Enum?**
-*   **Tính duy nhất (Single Source of Truth):** Tất cả các vai trò được định nghĩa ở một nơi duy nhất, tránh sự nhầm lẫn và không nhất quán.
-*   **Dễ quản lý DB:** Cột `role` trong bảng `users` chỉ cần tham chiếu đến một `enum` này.
-*   **Linh hoạt trong phân quyền:** Trong code NestJS, bạn có thể dễ dàng tạo các Guard (bộ bảo vệ) để kiểm tra: "Hành động này có được phép cho `UserRole.ADMIN` hoặc `UserRole.UNIVERSITY` không?".
+Xem chi tiết: [I18N-GUIDE.md](I18N-GUIDE.md)
+
+## 🔑 Authentication Flow
+
+### 1. Đăng ký tài khoản
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123",
+  "role": "student",
+  "fullName": "Nguyen Van A"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "statusCode": 201,
+  "message": "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "user@example.com",
+      "role": "student",
+      "isEmailVerified": false
+    }
+  }
+}
+```
+
+### 2. Xác thực Email
+
+```http
+POST /api/auth/verify-email
+Content-Type: application/json
+
+{
+  "token": "verification-token-from-email"
+}
+```
+
+### 3. Đăng nhập
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGc...",
+    "refreshToken": "uuid-refresh-token",
+    "user": {
+      "id": "uuid",
+      "email": "user@example.com",
+      "role": "student",
+      "isEmailVerified": true
+    }
+  }
+}
+```
+
+### 4. Sử dụng Access Token
+
+```http
+GET /api/users/me
+Authorization: Bearer eyJhbGc...
+```
+
+### 5. Refresh Token
+
+```http
+POST /api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "uuid-refresh-token"
+}
+```
+
+## 👥 User Roles
+
+Hệ thống hỗ trợ 7 vai trò người dùng:
+
+| Role | Enum Value | Mô tả |
+|------|-----------|-------|
+| Admin | `admin` | Quản trị viên tối cao |
+| University | `university` | Đại diện trường đại học |
+| Company | `company` | Đại diện doanh nghiệp |
+| Student | `student` | Sinh viên |
+| Alumni | `alumni` | Cựu sinh viên |
+| Researcher | `researcher` | Nhà nghiên cứu |
+| Startup | `startup` | Công ty khởi nghiệp |
+
+## 🔐 Authorization
+
+Sử dụng `@Roles()` decorator để phân quyền:
+
+```typescript
+@Get('admin/users')
+  @Roles(UserRole.ADMIN)
+async getAllUsers() {
+  // Chỉ ADMIN mới truy cập được
+  }
+
+@Post('internships')
+  @Roles(UserRole.COMPANY, UserRole.ALUMNI)
+async createInternship() {
+  // COMPANY và ALUMNI có thể truy cập
+}
+```
+
+## 🗄️ Database
+
+### Schema
+
+**users** table:
+- `id` (UUID, PK)
+- `email` (VARCHAR, UNIQUE)
+- `password_hash` (VARCHAR)
+- `role` (ENUM)
+- `is_active` (BOOLEAN)
+- `is_email_verified` (BOOLEAN)
+- `created_at`, `updated_at` (TIMESTAMPTZ)
+
+**user_profiles** table:
+- `user_id` (UUID, PK, FK)
+- `full_name` (VARCHAR)
+- `avatar_url`, `phone_number`, `country`, `city`, `bio`
+- `date_of_birth`, `gender`
+- `linkedin_url`, `website_url`
+- `created_at`, `updated_at` (TIMESTAMPTZ)
+
+**email_verifications** table:
+- `id` (UUID, PK)
+- `user_id` (UUID, FK)
+- `token` (VARCHAR, UNIQUE)
+- `status` (ENUM)
+- `expires_at` (TIMESTAMPTZ)
+
+**refresh_tokens** table:
+- `id` (UUID, PK)
+- `user_id` (UUID, FK)
+- `token` (VARCHAR, UNIQUE)
+- `expires_at` (TIMESTAMPTZ)
+- `is_revoked` (BOOLEAN)
+
+### PostgreSQL Master/Slave Configuration
+
+TypeORM hỗ trợ replication tự động:
+
+```typescript
+// config/database.config.ts
+replication: {
+  master: {
+    host: 'master-db-host',
+    port: 5432,
+    // ...
+  },
+  slaves: [{
+    host: 'slave-db-host',
+    port: 5432,
+    // ...
+  }]
+}
+```
+
+- **Master**: Xử lý tất cả INSERT, UPDATE, DELETE
+- **Slave**: Xử lý tất cả SELECT queries
+- TypeORM tự động route queries đến đúng database
+
+## 🌍 Timezone Strategy
+
+Hệ thống **luôn luôn** sử dụng UTC timezone:
+
+- Database: `TIMESTAMPTZ` type, lưu trữ UTC
+- Backend: Mọi logic xử lý ngày giờ ở UTC
+- Frontend: Chịu trách nhiệm hiển thị theo timezone địa phương
+
+```typescript
+// main.ts
+process.env.TZ = 'UTC';
+
+// Entity
+@CreateDateColumn({ type: 'timestamptz' })
+createdAt: Date; // Tự động lưu dưới dạng UTC
+```
+
+## 📧 Email Templates
+
+Email được gửi tự động cho:
+- Xác thực email khi đăng ký
+- Chào mừng sau khi verify thành công
+- Reset mật khẩu (planned)
+
+Cấu hình SMTP trong `.env`:
+
+```env
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+```
+
+**Lưu ý**: Với Gmail, cần tạo App Password thay vì dùng mật khẩu thường.
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+## 📦 Docker Deployment
+
+### Build image:
+
+```bash
+docker build -t p2a-core-system:latest .
+```
+
+### Run với docker-compose:
+
+```bash
+docker-compose up -d
+```
+
+Services included:
+- `app`: NestJS application (port 3000)
+- `postgres`: PostgreSQL database (port 5432)
+- `pgadmin`: Database management UI (port 5050)
+
+## 🔧 Development Scripts
+
+```bash
+# Development
+npm run start:dev          # Start với hot-reload
+npm run build             # Build production
+npm run start:prod        # Start production
+
+# Code quality
+npm run lint              # ESLint
+npm run format            # Prettier
+
+# Docker
+./scripts/docker-dev.sh   # Start Docker Compose
+```
+
+## 📝 Response Format
+
+Tất cả API response đều có format chuẩn:
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "data": { ... },
+  "timestamp": "2025-10-21T10:30:00.000Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Lỗi...",
+  "errors": [...],
+  "timestamp": "2025-10-21T10:30:00.000Z",
+  "path": "/api/auth/login"
+}
+```
+
+> **Lưu ý**: Success response **KHÔNG có** field `message`, chỉ error response mới có.
+
+Xem chi tiết: [RESPONSE-FORMAT.md](RESPONSE-FORMAT.md)
+
+## 🛡️ Security
+
+- ✅ Password hashing với bcrypt (salt rounds: 10)
+- ✅ JWT với expiration
+- ✅ Refresh token rotation
+- ✅ Rate limiting (10 req/min)
+- ✅ CORS configuration
+- ✅ Helmet middleware
+- ✅ Input validation với class-validator
+- ✅ SQL injection protection (TypeORM)
+
+## 📖 Best Practices
+
+1. **Không dùng `throw new Error()`** - Sử dụng custom exceptions
+2. **Không tạo migrations** - Dùng TypeORM synchronize
+3. **Luôn validate input** - Dùng DTO với class-validator
+4. **Timezone UTC** - Mọi thao tác ngày giờ ở UTC
+5. **Response chuẩn** - Dùng TransformInterceptor
+6. **Logging** - Log mọi thao tác quan trọng
+
+## 🤝 Contributing
+
+1. Tạo branch mới từ `main`
+2. Implement feature/fix
+3. Viết tests
+4. Tạo Pull Request
+
+## 📄 License
+
+MIT License
 
 ---
 
-### Phần 2: Giải thích Vai trò (Roles) trong Từng Module
-
-Dưới đây là bảng phân tích chi tiết về vai trò và quyền hạn của từng `enum` member trong mỗi module chức năng.
-
-#### **Module 0: Hệ thống Lõi & Quản lý Người dùng (Core System)**
-Đây là module nền tảng, nơi các vai trò được khởi tạo và quản lý.
-
-| Vai trò (Role) | Enum Value | Mô tả vai trò trong Module này |
-| :--- | :--- | :--- |
-| **Khách (Chưa đăng nhập)** | (Không có) | Có thể thực hiện hành động **Đăng ký** để nhận một vai trò cụ thể. |
-| **Tất cả các vai trò** | `ADMIN`, `UNIVERSITY`, `COMPANY`, `STUDENT`, `ALUMNI`, `RESEARCHER`, `STARTUP` | Có thể **Đăng nhập/Đăng xuất**. Có thể **Quản lý hồ sơ cơ bản** của chính mình (đổi mật khẩu, ảnh đại diện). |
-| **Quản trị viên** | `ADMIN` | Có quyền truy cập **Admin Dashboard** để xem, khóa, hoặc chỉnh sửa thông tin/quyền của bất kỳ người dùng nào khác. |
-
-#### **Module 2: Career (Việc làm & Thực tập)**
-Module này có sự tương tác phức tạp giữa các bên cung (Doanh nghiệp) và cầu (Sinh viên/Cá nhân), với sự giám sát của Admin.
-
-| Vai trò (Role) | Enum Value | Mô tả vai trò trong Module này |
-| :--- | :--- | :--- |
-| **Doanh nghiệp** | `COMPANY` | **Người cung cấp cơ hội:** Đăng và quản lý hồ sơ công ty, đăng tin tuyển dụng (Job) và thực tập (Internship), xem danh sách ứng viên. |
-| **Cựu sinh viên** | `ALUMNI` | **Người cung cấp cơ hội (đặc biệt):** Có thể hành động như `COMPANY` nhưng có thêm tùy chọn ưu tiên cho trường cũ. |
-| **Sinh viên** | `STUDENT` | **Người tìm kiếm cơ hội:** Tạo CV, tìm kiếm, lọc và nộp hồ sơ ứng tuyển vào Jobs/Internships. |
-| **Nhà nghiên cứu** | `RESEARCHER` | **Người tìm kiếm cơ hội:** Tương tự `STUDENT`, có thể tìm kiếm các vị trí công việc phù hợp. |
-| **Quản trị viên** | `ADMIN` | **Người kiểm duyệt:** Duyệt (approve/reject) các tin đăng **Internship** để đảm bảo chất lượng. |
-
-#### **Module 3: Education (Giáo dục & Đào tạo)**
-Module này là sân chơi chính của các trường Đại học để quảng bá và kết nối.
-
-| Vai trò (Role) | Enum Value | Mô tả vai trò trong Module này |
-| :--- | :--- | :--- |
-| **Đại học** | `UNIVERSITY` | **Người cung cấp thông tin:** Tạo và quản lý hồ sơ trường, đăng tải thông tin về khóa học, chương trình trao đổi, và các "Skill course". |
-| **Sinh viên** | `STUDENT` | **Người tiêu thụ thông tin:** Tìm kiếm, so sánh các trường/khóa học. Truy cập các "Skill course" thông qua SSO. |
-| **Các vai trò khác** | `ALUMNI`, `RESEARCHER`, `GUEST` | Tương tự `STUDENT`, có quyền xem và tìm kiếm thông tin giáo dục công khai. |
-
-#### **Module 4: Research (Nghiên cứu)**
-Không gian dành riêng cho cộng đồng học thuật.
-
-| Vai trò (Role) | Enum Value | Mô tả vai trò trong Module này |
-| :--- | :--- | :--- |
-| **Nhà nghiên cứu** | `RESEARCHER` | **Người tạo và tìm kiếm dự án:** Đăng tải dự án nghiên cứu để tìm cộng tác viên, hoặc tìm kiếm các dự án khác để tham gia. |
-| **Đại học** | `UNIVERSITY` | **Tổ chức bảo trợ:** Có thể đăng tải các dự án nghiên cứu lớn của trường, đăng thông tin về các hội thảo khoa học. |
-| **Quản trị viên** | `ADMIN` | **Người hỗ trợ:** Có thể giúp các trường đăng tải thông tin về hội thảo. |
-| **Sinh viên / Cựu SV** | `STUDENT`, `ALUMNI` | **Người tham gia:** Tìm kiếm các dự án nghiên cứu để xin làm trợ lý hoặc tìm kiếm hội thảo để tham dự. |
-
-#### **Module 5: Business (Trung tâm Khởi nghiệp)**
-Hệ sinh thái kết nối Startup với các nguồn lực.
-
-| Vai trò (Role) | Enum Value | Mô tả vai trò trong Module này |
-| :--- | :--- | :--- |
-| **Startup** | `STARTUP` | **Bên cần hỗ trợ:** Tạo và quản lý hồ sơ startup, trình bày sản phẩm/dịch vụ để kêu gọi vốn hoặc tìm kiếm cố vấn. |
-| **Doanh nghiệp** | `COMPANY` | **Nhà đầu tư/Cố vấn tiềm năng:** Tìm kiếm, lọc và liên hệ với các startup để đầu tư hoặc hợp tác. |
-| **Cựu sinh viên / Nhà NC** | `ALUMNI`, `RESEARCHER` | **Nhà đầu tư/Cố vấn tiềm năng:** Tương tự `COMPANY`, có thể đóng vai trò là nhà đầu tư thiên thần hoặc cố vấn chuyên môn. |
-
-### Phần 3: Ví dụ triển khai Phân quyền trong NestJS
-
-Để áp dụng `UserRole` enum này, bạn sẽ tạo một `RolesGuard` và một decorator `@Roles`.
-
-**1. Decorator: `src/auth/decorators/roles.decorator.ts`**
-```typescript
-import { SetMetadata } from '@nestjs/common';
-import { UserRole } from '../../common/enums/user-role.enum';
-
-export const ROLES_KEY = 'roles';
-export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
-```
-
-**2. Guard: `src/auth/guards/roles.guard.ts`**
-```typescript
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { UserRole } from '../../common/enums/user-role.enum';
-import { ROLES_KEY } from '../decorators/roles.decorator';
-
-@Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-
-  canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (!requiredRoles) {
-      return true; // Nếu không yêu cầu role, cho phép truy cập
-    }
-    const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.some((role) => user.role === role);
-  }
-}
-```
-
-**3. Áp dụng trên Controller:**
-```typescript
-import { Controller, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../common/enums/user-role.enum';
-
-@Controller('internships')
-@UseGuards(JwtAuthGuard, RolesGuard) // Áp dụng guard xác thực và guard phân quyền
-export class InternshipController {
-
-  // Chỉ ADMIN mới có quyền truy cập endpoint này
-  @Post(':id/approve')
-  @Roles(UserRole.ADMIN)
-  approveInternship(/*...*/) {
-    // logic phê duyệt internship
-  }
-
-  // Chỉ COMPANY và ALUMNI mới có quyền đăng tin
-  @Post()
-  @Roles(UserRole.COMPANY, UserRole.ALUMNI)
-  createInternship(/*...*/) {
-    // logic tạo internship
-  }
-}
+**Developed by P2A ASEAN Team** 🎓
 ```

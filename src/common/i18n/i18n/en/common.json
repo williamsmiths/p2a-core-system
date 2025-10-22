@@ -1,0 +1,61 @@
+{
+  "success": {
+    "created": "Created successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully",
+    "sent": "Sent successfully",
+    "verified": "Verified successfully",
+    "logged_in": "Logged in successfully",
+    "logged_out": "Logged out successfully",
+    "password_changed": "Password changed successfully",
+    "email_sent": "Email sent successfully"
+  },
+  "error": {
+    "not_found": "Resource not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access denied",
+    "conflict": "Resource already exists",
+    "validation_failed": "Validation failed",
+    "server_error": "Internal server error",
+    "email_not_verified": "Email not verified",
+    "account_locked": "Account is locked",
+    "invalid_credentials": "Invalid credentials",
+    "token_expired": "Token has expired",
+    "token_invalid": "Invalid token"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email_invalid": "Invalid email format",
+    "password_weak": "Password must contain at least 8 characters with uppercase, lowercase and number",
+    "password_mismatch": "Passwords do not match",
+    "role_invalid": "Invalid role",
+    "phone_invalid": "Invalid phone number format",
+    "url_invalid": "Invalid URL format",
+    "date_invalid": "Invalid date format"
+  },
+  "auth": {
+    "register_success": "Registration successful. Please check your email to verify your account",
+    "login_success": "Login successful",
+    "logout_success": "Logout successful",
+    "email_verified": "Email verified successfully",
+    "email_verification_sent": "Verification email sent",
+    "password_changed": "Password changed successfully",
+    "account_locked": "Your account has been locked. Please contact administrator",
+    "email_already_exists": "Email already exists",
+    "invalid_credentials": "Invalid email or password",
+    "email_not_verified": "Please verify your email before logging in",
+    "token_expired": "Verification token has expired",
+    "token_used": "This token has already been used"
+  },
+  "user": {
+    "profile_updated": "Profile updated successfully",
+    "password_changed": "Password changed successfully",
+    "account_activated": "Account activated",
+    "account_deactivated": "Account deactivated"
+  },
+  "email": {
+    "verification_subject": "Verify your P2A ASEAN account",
+    "welcome_subject": "Welcome to P2A ASEAN!",
+    "password_reset_subject": "Reset your P2A ASEAN password"
+  }
+}

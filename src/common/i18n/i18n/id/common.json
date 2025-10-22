@@ -1,0 +1,61 @@
+{
+  "success": {
+    "created": "Berhasil dibuat",
+    "updated": "Berhasil diperbarui",
+    "deleted": "Berhasil dihapus",
+    "sent": "Berhasil dikirim",
+    "verified": "Berhasil diverifikasi",
+    "logged_in": "Berhasil masuk",
+    "logged_out": "Berhasil keluar",
+    "password_changed": "Berhasil mengubah kata sandi",
+    "email_sent": "Email berhasil dikirim"
+  },
+  "error": {
+    "not_found": "Sumber daya tidak ditemukan",
+    "unauthorized": "Akses tidak diizinkan",
+    "forbidden": "Akses ditolak",
+    "conflict": "Sumber daya sudah ada",
+    "validation_failed": "Data tidak valid",
+    "server_error": "Kesalahan server",
+    "email_not_verified": "Email belum diverifikasi",
+    "account_locked": "Akun terkunci",
+    "invalid_credentials": "Kredensial tidak valid",
+    "token_expired": "Token telah kedaluwarsa",
+    "token_invalid": "Token tidak valid"
+  },
+  "validation": {
+    "required": "Field ini wajib diisi",
+    "email_invalid": "Format email tidak valid",
+    "password_weak": "Kata sandi harus minimal 8 karakter dengan huruf besar, huruf kecil dan angka",
+    "password_mismatch": "Kata sandi tidak cocok",
+    "role_invalid": "Peran tidak valid",
+    "phone_invalid": "Format nomor telepon tidak valid",
+    "url_invalid": "Format URL tidak valid",
+    "date_invalid": "Format tanggal tidak valid"
+  },
+  "auth": {
+    "register_success": "Pendaftaran berhasil. Silakan periksa email untuk memverifikasi akun",
+    "login_success": "Login berhasil",
+    "logout_success": "Logout berhasil",
+    "email_verified": "Email berhasil diverifikasi",
+    "email_verification_sent": "Email verifikasi telah dikirim",
+    "password_changed": "Kata sandi berhasil diubah",
+    "account_locked": "Akun Anda telah dikunci. Silakan hubungi administrator",
+    "email_already_exists": "Email sudah digunakan",
+    "invalid_credentials": "Email atau kata sandi salah",
+    "email_not_verified": "Silakan verifikasi email sebelum login",
+    "token_expired": "Token verifikasi telah kedaluwarsa",
+    "token_used": "Token ini sudah digunakan"
+  },
+  "user": {
+    "profile_updated": "Profil berhasil diperbarui",
+    "password_changed": "Kata sandi berhasil diubah",
+    "account_activated": "Akun diaktifkan",
+    "account_deactivated": "Akun dinonaktifkan"
+  },
+  "email": {
+    "verification_subject": "Verifikasi akun P2A ASEAN",
+    "welcome_subject": "Selamat datang di P2A ASEAN!",
+    "password_reset_subject": "Reset kata sandi P2A ASEAN"
+  }
+}
