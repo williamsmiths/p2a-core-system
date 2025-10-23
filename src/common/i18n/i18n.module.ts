@@ -11,7 +11,7 @@ import { join } from 'path';
     I18nModule.forRoot({
       fallbackLanguage: 'en', // Ngôn ngữ mặc định
       loaderOptions: {
-        path: join(__dirname, '/i18n/'),
+        path: join(__dirname, './i18n/'),
         watch: true, // Auto reload khi thay đổi translation files
       },
       resolvers: [

@@ -21,8 +21,8 @@ export default registerAs(
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       synchronize: process.env.DB_SYNCHRONIZE === 'true',
       logging: process.env.DB_LOGGING === 'true',
-      timezone: 'UTC', // Luôn dùng UTC
       extra: {
+        timezone: 'UTC', // Luôn dùng UTC
         // Connection pool settings
         max: 20,
         min: 5,
@@ -83,6 +83,8 @@ export const dataSourceOptions: DataSourceOptions = {
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   synchronize: false,
   logging: false,
-  timezone: 'UTC',
+  extra: {
+    timezone: 'UTC',
+  },
 };
 

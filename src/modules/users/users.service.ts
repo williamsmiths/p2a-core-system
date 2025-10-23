@@ -196,5 +196,39 @@ export class UsersService {
 
     return {};
   }
+
+  /**
+   * Tìm user theo ID (cho gRPC)
+   */
+  async findById(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { id },
+      relations: ['profile'],
+    });
+  }
+
+  /**
+   * Tìm user theo email (cho gRPC)
+   */
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { email },
+      relations: ['profile'],
+    });
+  }
+
+  /**
+   * Tìm nhiều users theo IDs (cho gRPC)
+   */
+  async findByIds(ids: string[]): Promise<User[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    return this.usersRepository.find({
+      where: ids.map(id => ({ id })),
+      relations: ['profile'],
+    });
+  }
 }
 

@@ -22,6 +22,12 @@ export class EmailService {
   private initializeTransporter() {
     const mailConfig = this.configService.get('mail');
 
+    // Kiểm tra nếu không có cấu hình email thì skip
+    if (!mailConfig.host || !mailConfig.auth?.user) {
+      this.logger.warn('Email configuration not found. Email service disabled.');
+      return;
+    }
+
     this.transporter = nodemailer.createTransport({
       host: mailConfig.host,
       port: mailConfig.port,
@@ -43,6 +49,11 @@ export class EmailService {
    * Gửi email xác thực tài khoản
    */
   async sendVerificationEmail(email: string, fullName: string, token: string): Promise<void> {
+    if (!this.transporter) {
+      this.logger.warn('Email service is disabled. Skipping verification email.');
+      return;
+    }
+
     const mailConfig = this.configService.get('mail');
     const verificationUrl = `${mailConfig.verificationUrl}?token=${token}`;
 

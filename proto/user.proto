@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package user;
+
+// User Service - Expose user data cho các modules khác
+service UserService {
+  rpc FindById (UserByIdRequest) returns (UserResponse) {}
+  rpc FindByEmail (UserByEmailRequest) returns (UserResponse) {}
+  rpc ValidateUser (ValidateUserRequest) returns (UserResponse) {}
+  rpc GetUsersByIds (UsersByIdsRequest) returns (UsersResponse) {}
+}
+
+// Request Messages
+message UserByIdRequest {
+  string id = 1;
+}
+
+message UserByEmailRequest {
+  string email = 1;
+}
+
+message ValidateUserRequest {
+  string id = 1;
+}
+
+message UsersByIdsRequest {
+  repeated string ids = 1;
+}
+
+// Response Messages
+message UserResponse {
+  string id = 1;
+  string email = 2;
+  string role = 3;
+  bool is_active = 4;
+  bool is_email_verified = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  UserProfileMessage profile = 8;
+}
+
+message UserProfileMessage {
+  string full_name = 1;
+  string avatar_url = 2;
+  string phone_number = 3;
+  string country = 4;
+  string city = 5;
+  string bio = 6;
+  string date_of_birth = 7;
+  string gender = 8;
+  string linkedin_url = 9;
+  string website_url = 10;
+}
+
+message UsersResponse {
+  repeated UserResponse users = 1;
+}
+

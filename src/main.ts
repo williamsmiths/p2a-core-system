@@ -2,8 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as compression from 'compression';
 import helmet from 'helmet';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 /**
@@ -20,8 +22,19 @@ async function bootstrap() {
   // Get config service
   const configService = app.get(ConfigService);
   const port = configService.get<number>('app.port', 3000);
+  const grpcPort = configService.get<number>('app.grpcPort', 50051);
   const nodeEnv = configService.get<string>('app.nodeEnv', 'development');
   const corsOrigin = configService.get<string[]>('app.corsOrigin', ['*']);
+
+  // Setup gRPC Microservice
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: {
+      package: 'user',
+      protoPath: join(__dirname, '../proto/user.proto'),
+      url: `0.0.0.0:${grpcPort}`,
+    },
+  });
 
   // Global prefix cho tất cả routes
   app.setGlobalPrefix('api');
@@ -69,10 +82,14 @@ async function bootstrap() {
     logger.log('Swagger documentation available at /api/docs');
   }
 
-  // Start server
+  // Start all microservices
+  await app.startAllMicroservices();
+  
+  // Start HTTP server
   await app.listen(port);
 
-  logger.log(`🚀 Application is running on: http://localhost:${port}/api`);
+  logger.log(`🚀 HTTP Application is running on: http://localhost:${port}/api`);
+  logger.log(`🔌 gRPC Server is running on: localhost:${grpcPort}`);
   logger.log(`📝 Environment: ${nodeEnv}`);
   logger.log(`🌍 Timezone: ${process.env.TZ || 'UTC'}`);
   logger.log(`💚 Health check: http://localhost:${port}/api/health`);

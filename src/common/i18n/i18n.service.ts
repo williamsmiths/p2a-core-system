@@ -68,7 +68,7 @@ export class I18nServiceWrapper {
    * Get current language from request context
    */
   getCurrentLanguage(): string {
-    return this.i18n.lang || 'en';
+    return (this.i18n as any).lang || 'en';
   }
 
   /**

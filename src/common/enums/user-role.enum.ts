@@ -7,6 +7,12 @@ export enum UserRole {
    * Quản trị viên tối cao của hệ thống P2A
    * Có quyền truy cập mọi thứ, đặc biệt là các dashboard quản trị và duyệt nội dung
    */
+  SUPER_ADMIN = 'super_admin',
+
+  /**
+   * Quản trị viên của hệ thống P2A
+   * Có quyền quản lý nội dung và người dùng
+   */
   ADMIN = 'admin',
 
   /**

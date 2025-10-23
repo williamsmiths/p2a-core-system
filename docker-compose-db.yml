@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Master Database
+  postgres-master:
+    image: postgres:16
+    container_name: p2a-core-postgres-master
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-p2a_password}
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_core}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+      - ./init-master.sql:/docker-entrypoint-initdb.d/init-master.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - p2a-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_core}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # PostgreSQL Slave Database
+  postgres-slave:
+    image: postgres:16
+    container_name: p2a-core-postgres-slave
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_SLAVE_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_SLAVE_PASSWORD:-p2a_password}
+      POSTGRES_DB: ${DB_SLAVE_DATABASE:-p2a_core}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - postgres_slave_data:/var/lib/postgresql/data
+      - ./init-slave.sql:/docker-entrypoint-initdb.d/init-slave.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - p2a-network
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_SLAVE_USERNAME:-p2a_user} -d ${DB_SLAVE_DATABASE:-p2a_core}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_master_data:
+    driver: local
+  postgres_slave_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  p2a-network:
+    driver: bridge
+
