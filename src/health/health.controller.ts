@@ -11,9 +11,7 @@ export class HealthController {
   @Get()
   check() {
     return {
-      status: 'ok',
       service: 'p2a-core-system',
-      timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     };
   }

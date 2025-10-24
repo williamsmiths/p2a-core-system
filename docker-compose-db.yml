@@ -1,60 +1,65 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Master Database
+  # PostgreSQL Master (Main DB)
   postgres-master:
     image: postgres:16
     container_name: p2a-core-postgres-master
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
-      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-p2a_password}
       POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_core}
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-Kx9mP2A2024MasterDB7nQ8vR3s}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
-      TZ: UTC
-      PGTZ: UTC
-    volumes:
-      - postgres_master_data:/var/lib/postgresql/data
-      - ./init-master.sql:/docker-entrypoint-initdb.d/init-master.sql
+      # Replication settings
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: Kx9mP2A2024Replicator7nQ8vR3s
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+      - ./scripts/02-setup-replication.sql:/docker-entrypoint-initdb.d/02-setup-replication.sql
+      - ./scripts/03-setup-pg-hba.sh:/docker-entrypoint-initdb.d/03-setup-pg-hba.sh
+      - ./scripts/pg_hba.conf:/tmp/pg_hba.conf
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c max_replication_slots=3
+      -c hot_standby=on
+      -c hot_standby_feedback=on
     networks:
-      - p2a-network
+      - p2a-core-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_core}"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
-      start_period: 30s
 
-  # PostgreSQL Slave Database
+  # PostgreSQL Slave (Read Replica) 
   postgres-slave:
     image: postgres:16
     container_name: p2a-core-postgres-slave
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_SLAVE_USERNAME:-p2a_user}
-      POSTGRES_PASSWORD: ${DB_SLAVE_PASSWORD:-p2a_password}
+      POSTGRES_PASSWORD: ${DB_SLAVE_PASSWORD:-Kx9mP2A2024SlaveDB7nQ8vR3s}
       POSTGRES_DB: ${DB_SLAVE_DATABASE:-p2a_core}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
-      TZ: UTC
-      PGTZ: UTC
-    volumes:
-      - postgres_slave_data:/var/lib/postgresql/data
-      - ./init-slave.sql:/docker-entrypoint-initdb.d/init-slave.sql
+      PGDATA: /var/lib/postgresql/data
+      PGUSER: postgres
     ports:
       - "5433:5432"
-    networks:
-      - p2a-network
+    volumes:
+      - postgres_slave_data:/var/lib/postgresql/data
     depends_on:
       postgres-master:
         condition: service_healthy
+    networks:
+      - p2a-core-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_SLAVE_USERNAME:-p2a_user} -d ${DB_SLAVE_DATABASE:-p2a_core}"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
-      start_period: 30s
 
 volumes:
   postgres_master_data:
@@ -65,6 +70,6 @@ volumes:
     driver: local
 
 networks:
-  p2a-network:
-    driver: bridge
-
+  p2a-core-network:
+    external: true
+    name: p2a-core-network

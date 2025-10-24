@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as compression from 'compression';
 import helmet from 'helmet';
@@ -65,22 +64,6 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger documentation (chỉ enable trong development)
-  if (nodeEnv === 'development') {
-    const config = new DocumentBuilder()
-      .setTitle('P2A ASEAN Core System API')
-      .setDescription('API documentation for P2A ASEAN Core System')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addTag('auth', 'Authentication endpoints')
-      .addTag('users', 'User management endpoints')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-
-    logger.log('Swagger documentation available at /api/docs');
-  }
 
   // Start all microservices
   await app.startAllMicroservices();
