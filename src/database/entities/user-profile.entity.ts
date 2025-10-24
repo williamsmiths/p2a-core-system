@@ -1,24 +1,28 @@
 import {
   Entity,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   Column,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { UserRole } from '../../common/enums';
 
 /**
  * Entity UserProfile - Bảng user_profiles chứa thông tin chi tiết người dùng
- * Quan hệ 1-1 với User, dùng userId làm primary key
+ * Quan hệ N-1 với User (nhiều profile thuộc về 1 user)
  */
 @Entity('user_profiles')
 export class UserProfile {
-  @PrimaryColumn('uuid', { name: 'user_id' })
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ name: 'user_id' })
   userId: string;
 
-  @OneToOne(() => User, (user) => user.profile, {
+  @ManyToOne(() => User, (user) => user.profiles, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
@@ -26,6 +30,13 @@ export class UserProfile {
 
   @Column({ name: 'full_name', length: 255 })
   fullName: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.STUDENT,
+  })
+  role: UserRole;
 
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
   avatarUrl: string | null;

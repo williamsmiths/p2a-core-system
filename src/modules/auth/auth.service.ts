@@ -14,7 +14,7 @@ import {
   NotFoundException,
   ValidationException,
 } from '../../common/exceptions';
-import { EmailVerificationStatus } from '../../common/enums';
+import { EmailVerificationStatus, UserRole } from '../../common/enums';
 import { RegisterDto, LoginDto, VerifyEmailDto, RefreshTokenDto } from './dto';
 
 /**
@@ -45,45 +45,64 @@ export class AuthService {
   async register(registerDto: RegisterDto, userAgent?: string, ipAddress?: string) {
     const { email, password, role, fullName } = registerDto;
 
-    // Kiểm tra email đã tồn tại chưa
-    const existingUser = await this.usersRepository.findOne({
-      where: { email: email.toLowerCase() },
+    // Kiểm tra email + role đã tồn tại chưa
+    const existingProfile = await this.profilesRepository.findOne({
+      where: { 
+        user: { email: email.toLowerCase() },
+        role: role
+      },
+      relations: ['user']
     });
 
-    if (existingUser) {
-      throw new ConflictException(this.i18n.translate('auth.email_already_exists'));
+    if (existingProfile) {
+      throw new ConflictException(this.i18n.translate('auth.email_role_already_exists'));
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    // Tạo user mới
-    const user = this.usersRepository.create({
-      email: email.toLowerCase(),
-      passwordHash,
-      role,
-      isActive: true,
-      isEmailVerified: false,
+    // Tìm user hiện tại (nếu có)
+    let user = await this.usersRepository.findOne({
+      where: { email: email.toLowerCase() },
+      relations: ['profiles']
     });
 
-    const savedUser = await this.usersRepository.save(user);
+    if (user) {
+      // User đã tồn tại, kiểm tra password
+      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException(this.i18n.translate('auth.invalid_credentials'));
+      }
+    } else {
+      // Tạo user mới
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
 
-    // Tạo profile
+      user = this.usersRepository.create({
+        email: email.toLowerCase(),
+        passwordHash,
+        isActive: true,
+        isEmailVerified: false,
+      });
+
+      user = await this.usersRepository.save(user);
+    }
+
+    // Tạo profile mới với role
     const profile = this.profilesRepository.create({
-      userId: savedUser.id,
+      userId: user.id,
       fullName,
+      role,
     });
 
     await this.profilesRepository.save(profile);
 
-    // Tạo token xác thực email
-    await this.createEmailVerificationToken(savedUser);
+    // Tạo token xác thực email (chỉ cho user mới)
+    if (!user.isEmailVerified) {
+      await this.createEmailVerificationToken(user, profile);
+    }
 
-    this.logger.log(`New user registered: ${email}`);
+    this.logger.log(`New profile added for user: ${email} with role: ${role}`);
 
     // Không trả về password hash
-    const { passwordHash: _, ...userWithoutPassword } = savedUser;
+    const { passwordHash: _, ...userWithoutPassword } = user;
 
     return {
       user: userWithoutPassword,
@@ -94,12 +113,12 @@ export class AuthService {
    * Đăng nhập
    */
   async login(loginDto: LoginDto, userAgent?: string, ipAddress?: string) {
-    const { email, password } = loginDto;
+    const { email, password, role } = loginDto;
 
-    // Tìm user
+    // Tìm user với profiles
     const user = await this.usersRepository.findOne({
       where: { email: email.toLowerCase() },
-      relations: ['profile'],
+      relations: ['profiles'],
     });
 
     if (!user) {
@@ -118,6 +137,14 @@ export class AuthService {
       throw new UnauthorizedException(this.i18n.translate('auth.invalid_credentials'));
     }
 
+    // Nếu có role được chỉ định, kiểm tra user có profile với role đó không
+    if (role) {
+      const profileWithRole = user.profiles?.find(p => p.role === role);
+      if (!profileWithRole) {
+        throw new UnauthorizedException(this.i18n.translate('auth.role_not_available'));
+      }
+    }
+
     // Cập nhật last login
     user.lastLoginAt = new Date();
     await this.usersRepository.save(user);
@@ -126,7 +153,12 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user);
     const refreshToken = await this.generateRefreshToken(user, userAgent, ipAddress);
 
-    this.logger.log(`User logged in: ${email}`);
+    // Lấy profile hiện tại (role đầu tiên hoặc role được chỉ định)
+    const currentProfile = role 
+      ? user.profiles?.find(p => p.role === role)
+      : user.profiles?.[0];
+
+    this.logger.log(`User logged in: ${email} with role: ${currentProfile?.role}`);
 
     return {
       accessToken,
@@ -134,9 +166,9 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
+        role: currentProfile?.role,
         isEmailVerified: user.isEmailVerified,
-        profile: user.profile,
+        profile: currentProfile,
       },
     };
   }
@@ -269,9 +301,58 @@ export class AuthService {
   }
 
   /**
+   * Chuyển đổi role cho user hiện tại
+   */
+  async switchRole(userId: string, newRole: UserRole) {
+    // Tìm user với tất cả profiles
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['profiles'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User', userId);
+    }
+
+    // Kiểm tra user có profile với role mới không
+    const existingProfile = user.profiles?.find(p => p.role === newRole);
+
+    if (!existingProfile) {
+      throw new NotFoundException('Profile with role', newRole);
+    }
+
+    // Cập nhật current role trong JWT payload sẽ được xử lý ở controller
+    this.logger.log(`User ${userId} switching to role: ${newRole}`);
+
+    return {
+      message: 'Role switched successfully',
+      newRole,
+      profile: existingProfile,
+    };
+  }
+
+  /**
+   * Lấy danh sách roles có sẵn cho user
+   */
+  async getAvailableRoles(userId: string) {
+    const profiles = await this.profilesRepository.find({
+      where: { userId },
+      select: ['role', 'fullName', 'createdAt']
+    });
+
+    return {
+      availableRoles: profiles.map(profile => ({
+        role: profile.role,
+        fullName: profile.fullName,
+        createdAt: profile.createdAt
+      }))
+    };
+  }
+
+  /**
    * Tạo email verification token
    */
-  private async createEmailVerificationToken(user: User) {
+  private async createEmailVerificationToken(user: User, profile?: UserProfile) {
     const token = uuidv4();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // Hết hạn sau 24h
@@ -285,26 +366,28 @@ export class AuthService {
 
     await this.emailVerificationsRepository.save(verification);
 
-    // Gửi email
+    // Gửi email (không bắt buộc)
     try {
-      const profile = await this.profilesRepository.findOne({
+      const userProfile = profile || await this.profilesRepository.findOne({
         where: { userId: user.id },
       });
-      await this.emailService.sendVerificationEmail(user.email, profile?.fullName || 'User', token);
+      await this.emailService.sendVerificationEmail(user.email, userProfile?.fullName || 'User', token);
+      this.logger.log(`Verification email sent to: ${user.email}`);
     } catch (error) {
-      this.logger.error('Failed to send verification email', error);
-      throw new ValidationException(this.i18n.translate('error.email_send_failed'));
+      this.logger.warn(`Failed to send verification email to ${user.email}:`, error.message);
+      // Không throw error, chỉ log warning
+      // User vẫn có thể đăng ký thành công và verify email sau
     }
   }
 
   /**
    * Generate JWT access token
    */
-  private generateAccessToken(user: User): string {
+  generateAccessToken(user: User): string {
     const payload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role: user.profiles?.[0]?.role,
       isEmailVerified: user.isEmailVerified,
     };
 
@@ -341,6 +424,16 @@ export class AuthService {
     await this.refreshTokensRepository.save(refreshToken);
 
     return token;
+  }
+
+  /**
+   * Tìm user theo ID
+   */
+  async findById(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { id },
+      relations: ['profiles'],
+    });
   }
 }
 

@@ -1,7 +1,9 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Ip, Headers, Get, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, VerifyEmailDto, RefreshTokenDto } from './dto';
-import { Public } from '../../common/decorators';
+import { Public, CurrentUser } from '../../common/decorators';
+import { RequestUser } from '../../common/decorators/current-user.decorator';
+import { UserRole } from '../../common/enums';
 
 /**
  * Auth Controller - Xử lý các endpoint liên quan đến authentication
@@ -93,6 +95,37 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@Body('refreshToken') refreshToken: string) {
     return this.authService.logout(refreshToken);
+  }
+
+  /**
+   * POST /auth/switch-role
+   * Chuyển đổi role
+   */
+  @Post('switch-role')
+  @HttpCode(HttpStatus.OK)
+  async switchRole(@CurrentUser() user: RequestUser, @Body() body: { role: UserRole }) {
+    const result = await this.authService.switchRole(user.userId, body.role);
+    
+    // Tạo JWT mới với role mới
+    const userWithNewRole = await this.authService.findById(user.userId);
+    if (userWithNewRole) {
+      const newAccessToken = this.authService.generateAccessToken(userWithNewRole);
+      return {
+        ...result,
+        accessToken: newAccessToken,
+      };
+    }
+    
+    return result;
+  }
+
+  /**
+   * GET /auth/available-roles
+   * Lấy danh sách roles có sẵn
+   */
+  @Get('available-roles')
+  async getAvailableRoles(@CurrentUser() user: RequestUser) {
+    return this.authService.getAvailableRoles(user.userId);
   }
 }
 

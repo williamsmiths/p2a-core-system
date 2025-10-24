@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
+import { UserRole } from '../../../common/enums';
 
 /**
  * DTO cho đăng nhập
@@ -10,5 +11,9 @@ export class LoginDto {
 
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
   password: string;
+
+  @IsOptional()
+  @IsEnum(UserRole, { message: 'Role không hợp lệ' })
+  role?: UserRole;
 }
 

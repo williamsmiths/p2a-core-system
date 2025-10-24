@@ -44,7 +44,12 @@ export class AdminInitService {
   private async createSuperAdmin(): Promise<void> {
     const existingSuperAdmin = await this.dataSource
       .getRepository(User)
-      .findOne({ where: { role: UserRole.SUPER_ADMIN } });
+      .findOne({ 
+        where: { 
+          email: 'superadmin@p2a-asean.org'
+        },
+        relations: ['profile']
+      });
 
     if (existingSuperAdmin) {
       this.logger.log('⚠️  Super Admin đã tồn tại, bỏ qua...');
@@ -58,7 +63,6 @@ export class AdminInitService {
     const superAdmin = this.dataSource.getRepository(User).create({
       email: 'superadmin@p2a-asean.org',
       passwordHash: superAdminPasswordHash,
-      role: UserRole.SUPER_ADMIN,
       isActive: true,
       isEmailVerified: true,
       emailVerifiedAt: new Date(),
@@ -71,6 +75,7 @@ export class AdminInitService {
       userId: superAdmin.id,
       user: superAdmin,
       fullName: 'Super Administrator',
+      role: UserRole.SUPER_ADMIN,
       phoneNumber: '+84-xxx-xxx-xxxx',
       dateOfBirth: new Date('1990-01-01'),
       gender: 'other',
@@ -95,7 +100,12 @@ export class AdminInitService {
   private async createAdmin(): Promise<void> {
     const existingAdmin = await this.dataSource
       .getRepository(User)
-      .findOne({ where: { role: UserRole.ADMIN } });
+      .findOne({ 
+        where: { 
+          email: 'admin@p2a-asean.org'
+        },
+        relations: ['profile']
+      });
 
     if (existingAdmin) {
       this.logger.log('⚠️  Admin đã tồn tại, bỏ qua...');
@@ -109,7 +119,6 @@ export class AdminInitService {
     const admin = this.dataSource.getRepository(User).create({
       email: 'admin@p2a-asean.org',
       passwordHash: adminPasswordHash,
-      role: UserRole.ADMIN,
       isActive: true,
       isEmailVerified: true,
       emailVerifiedAt: new Date(),
@@ -122,6 +131,7 @@ export class AdminInitService {
       userId: admin.id,
       user: admin,
       fullName: 'System Administrator',
+      role: UserRole.ADMIN,
       phoneNumber: '+84-xxx-xxx-xxxx',
       dateOfBirth: new Date('1990-01-01'),
       gender: 'other',

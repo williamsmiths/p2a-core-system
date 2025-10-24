@@ -4,34 +4,27 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
+  OneToMany,
   Index,
 } from 'typeorm';
-import { UserRole } from '../../common/enums';
 import { UserProfile } from './user-profile.entity';
 
 /**
- * Entity User - Bảng users chứa thông tin xác thực và vai trò
- * Quan hệ 1-1 với UserProfile
+ * Entity User - Bảng users chứa thông tin xác thực
+ * Quan hệ 1-N với UserProfile (1 user có thể có nhiều profile/role)
  */
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true, length: 255 })
+  @Column({ length: 255 })
   @Index()
   email: string;
 
   @Column({ name: 'password_hash' })
   passwordHash: string;
 
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.STUDENT,
-  })
-  role: UserRole;
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
@@ -60,10 +53,10 @@ export class User {
   updatedAt: Date;
 
   // Relations
-  @OneToOne(() => UserProfile, (profile) => profile.user, {
+  @OneToMany(() => UserProfile, (profile) => profile.user, {
     cascade: true,
   })
-  profile: UserProfile;
+  profiles: UserProfile[];
 
   /**
    * Method để ẩn password khi serialize
