@@ -23,6 +23,9 @@ import { TransformInterceptor } from './common/interceptors';
 // Controllers
 import { HealthController } from './health/health.controller';
 
+// Services
+import { AdminInitService } from './services/admin-init.service';
+
 @Module({
   imports: [
     // Config Module - Load environment variables
@@ -58,6 +61,8 @@ import { HealthController } from './health/health.controller';
   ],
   controllers: [HealthController],
   providers: [
+    // Services
+    AdminInitService,
     // Global Guards
     {
       provide: APP_GUARD,

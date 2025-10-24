@@ -75,7 +75,10 @@ export class UsersGrpcController {
         country: user.profile.country || '',
         city: user.profile.city || '',
         bio: user.profile.bio || '',
-        date_of_birth: user.profile.dateOfBirth ? user.profile.dateOfBirth.toISOString().split('T')[0] : '',
+        date_of_birth: user.profile.dateOfBirth ? 
+          (user.profile.dateOfBirth instanceof Date ? 
+            user.profile.dateOfBirth.toISOString().split('T')[0] : 
+            user.profile.dateOfBirth.toString()) : '',
         gender: user.profile.gender || '',
         linkedin_url: user.profile.linkedinUrl || '',
         website_url: user.profile.websiteUrl || '',

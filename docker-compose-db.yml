@@ -17,8 +17,7 @@ services:
     volumes:
       - postgres_master_data:/var/lib/postgresql/data
       - ./scripts/02-setup-replication.sql:/docker-entrypoint-initdb.d/02-setup-replication.sql
-      - ./scripts/03-setup-pg-hba.sh:/docker-entrypoint-initdb.d/03-setup-pg-hba.sh
-      - ./scripts/pg_hba.conf:/tmp/pg_hba.conf
+      - ./scripts/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
     command: >
       postgres
       -c listen_addresses='*'
@@ -35,28 +34,29 @@ services:
       timeout: 10s
       retries: 5
 
-  # PostgreSQL Slave (Read Replica) 
+  # PostgreSQL Slave (Read Replica - Streaming Replication)
   postgres-slave:
     image: postgres:16
     container_name: p2a-core-postgres-slave
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_SLAVE_USERNAME:-p2a_user}
-      POSTGRES_PASSWORD: ${DB_SLAVE_PASSWORD:-Kx9mP2A2024SlaveDB7nQ8vR3s}
-      POSTGRES_DB: ${DB_SLAVE_DATABASE:-p2a_core}
       PGDATA: /var/lib/postgresql/data
-      PGUSER: postgres
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-Kx9mP2A2024MasterDB7nQ8vR3s}
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_core}
     ports:
       - "5433:5432"
     volumes:
       - postgres_slave_data:/var/lib/postgresql/data
+      - ./scripts/setup-slave-replication.sh:/docker-entrypoint-initdb.d/setup-slave-replication.sh
     depends_on:
       postgres-master:
         condition: service_healthy
     networks:
       - p2a-core-network
+    command: ["/bin/bash", "/docker-entrypoint-initdb.d/setup-slave-replication.sh"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_SLAVE_USERNAME:-p2a_user} -d ${DB_SLAVE_DATABASE:-p2a_core}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_core} || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

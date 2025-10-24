@@ -6,6 +6,7 @@ import * as compression from 'compression';
 import helmet from 'helmet';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { AdminInitService } from './services/admin-init.service';
 
 /**
  * Bootstrap function - Khởi tạo NestJS application
@@ -67,6 +68,15 @@ async function bootstrap() {
 
   // Start all microservices
   await app.startAllMicroservices();
+  
+  // Khởi tạo admin users tự động
+  try {
+    const adminInitService = app.get(AdminInitService);
+    await adminInitService.initAdminUsers();
+  } catch (error) {
+    logger.error('❌ Lỗi khi khởi tạo admin users:', error);
+    // Không dừng server nếu lỗi init admin
+  }
   
   // Start HTTP server
   await app.listen(port);
