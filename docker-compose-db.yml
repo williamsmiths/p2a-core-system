@@ -13,7 +13,7 @@ services:
       POSTGRES_REPLICATION_USER: replicator
       POSTGRES_REPLICATION_PASSWORD: Kx9mP2A2024Replicator7nQ8vR3s
     ports:
-      - "5432:5432"
+      - "5532:5432"
     volumes:
       - postgres_master_data:/var/lib/postgresql/data
       - ./scripts/02-setup-replication.sql:/docker-entrypoint-initdb.d/02-setup-replication.sql
@@ -46,7 +46,7 @@ services:
       POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-Kx9mP2A2024MasterDB7nQ8vR3s}
       POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_core}
     ports:
-      - "5433:5432"
+      - "5533:5432"
     volumes:
       - postgres_slave_data:/var/lib/postgresql/data
       - ./scripts/setup-slave-replication.sh:/docker-entrypoint-initdb.d/setup-slave-replication.sh

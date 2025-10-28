@@ -127,17 +127,11 @@ export class AuthService {
     const refreshToken = await this.generateRefreshToken(user, userAgent, ipAddress);
 
     this.logger.log(`User logged in: ${email}`);
-
+    // console.log('accessToken', accessToken);
+    // Không trả thông tin user trong response đăng nhập để tránh lộ dữ liệu nhạy cảm
     return {
       accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-        profile: user.profile,
-      },
     };
   }
 
