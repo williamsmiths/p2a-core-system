@@ -14,14 +14,12 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO replicator;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO replicator;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO replicator;
 
--- Create replication slot (optional but recommended)
--- This will be created by the slave when it connects
--- SELECT pg_create_physical_replication_slot('slot_slave_1');
+-- Create replication slot for slave (REQUIRED for streaming replication)
+SELECT pg_create_physical_replication_slot('replica_slot');
 
 -- Show replication settings
 SELECT name, setting FROM pg_settings WHERE name LIKE '%replication%' OR name LIKE '%wal%';
 
 -- Log completion
 \echo 'Master replication setup completed successfully'
-GRANT CONNECT ON DATABASE p2a_core TO replicator;
-GRANT USAGE ON SCHEMA public TO replicator;
+\echo 'Replication slot "replica_slot" created'
