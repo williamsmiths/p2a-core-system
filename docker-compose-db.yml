@@ -27,7 +27,7 @@ services:
       -c hot_standby=on
       -c hot_standby_feedback=on
     networks:
-      - p2a-core-network
+      - p2a-asean-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_core}"]
       interval: 30s
@@ -53,7 +53,7 @@ services:
       postgres-master:
         condition: service_healthy
     networks:
-      - p2a-core-network
+      - p2a-asean-network
     command: ["/bin/bash", "/docker-entrypoint-initdb.d/setup-slave-replication.sh"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_core} || exit 1"]
@@ -70,6 +70,6 @@ volumes:
     driver: local
 
 networks:
-  p2a-core-network:
+  p2a-asean-network:
     external: true
-    name: p2a-core-network
+    name: p2a-asean-network
