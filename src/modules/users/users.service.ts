@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { I18nService } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
 import { User, UserProfile } from '../../database/entities';
 import { UpdateProfileDto, ChangePasswordDto } from './dto';
 import { NotFoundException, UnauthorizedException, ValidationException } from '../../common/exceptions';
+import { ErrorCode } from '../../common';
 
 /**
  * Users Service - Xử lý logic liên quan đến user và profile
@@ -19,7 +19,6 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(UserProfile)
     private profilesRepository: Repository<UserProfile>,
-    private i18n: I18nService,
   ) {}
 
   /**
@@ -85,14 +84,14 @@ export class UsersService {
     const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException(this.i18n.translate('auth.invalid_credentials'));
+      throw new UnauthorizedException('Mật khẩu hiện tại không đúng', ErrorCode.USER_PASSWORD_INVALID);
     }
 
     // Kiểm tra mật khẩu mới không được giống mật khẩu cũ
     const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
 
     if (isSamePassword) {
-      throw new ValidationException(this.i18n.translate('validation.password_same'));
+      throw new ValidationException('Mật khẩu mới phải khác mật khẩu hiện tại', ErrorCode.USER_PASSWORD_SAME);
     }
 
     // Hash mật khẩu mới

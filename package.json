@@ -50,7 +50,6 @@
     "reflect-metadata": "^0.1.14",
     "cache-manager": "^5.3.2",
     "dotenv": "^16.3.1",
-    "nestjs-i18n": "^10.2.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.2.1",

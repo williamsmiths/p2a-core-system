@@ -5,12 +5,12 @@ import { HttpException, HttpStatus } from '@nestjs/common';
  * Thay thế cho việc throw new Error() chung chung
  */
 export class BusinessException extends HttpException {
-  constructor(message: string, statusCode: HttpStatus = HttpStatus.BAD_REQUEST) {
+  constructor(message: string, statusCode: HttpStatus = HttpStatus.BAD_REQUEST, code?: string) {
     super(
       {
         success: false,
         statusCode,
-        message,
+        ...(code && { code }),
         timestamp: new Date().toISOString(),
       },
       statusCode,
@@ -26,7 +26,7 @@ export class NotFoundException extends BusinessException {
     const message = identifier
       ? `${resource} với ID "${identifier}" không tồn tại`
       : `${resource} không tồn tại`;
-    super(message, HttpStatus.NOT_FOUND);
+    super(message, HttpStatus.NOT_FOUND, 'NOT_FOUND');
   }
 }
 
@@ -34,8 +34,8 @@ export class NotFoundException extends BusinessException {
  * Exception cho lỗi xung đột dữ liệu (duplicate)
  */
 export class ConflictException extends BusinessException {
-  constructor(message: string) {
-    super(message, HttpStatus.CONFLICT);
+  constructor(message: string, code: string = 'CONFLICT') {
+    super(message, HttpStatus.CONFLICT, code);
   }
 }
 
@@ -43,8 +43,8 @@ export class ConflictException extends BusinessException {
  * Exception cho lỗi xác thực thất bại
  */
 export class UnauthorizedException extends BusinessException {
-  constructor(message: string = 'Xác thực thất bại') {
-    super(message, HttpStatus.UNAUTHORIZED);
+  constructor(message: string = 'Xác thực thất bại', code: string = 'UNAUTHORIZED') {
+    super(message, HttpStatus.UNAUTHORIZED, code);
   }
 }
 
@@ -52,8 +52,8 @@ export class UnauthorizedException extends BusinessException {
  * Exception cho lỗi không có quyền truy cập
  */
 export class ForbiddenException extends BusinessException {
-  constructor(message: string = 'Bạn không có quyền truy cập tài nguyên này') {
-    super(message, HttpStatus.FORBIDDEN);
+  constructor(message: string = 'Bạn không có quyền truy cập tài nguyên này', code: string = 'FORBIDDEN') {
+    super(message, HttpStatus.FORBIDDEN, code);
   }
 }
 
@@ -61,8 +61,8 @@ export class ForbiddenException extends BusinessException {
  * Exception cho lỗi validation
  */
 export class ValidationException extends BusinessException {
-  constructor(message: string) {
-    super(message, HttpStatus.UNPROCESSABLE_ENTITY);
+  constructor(message: string, code: string = 'VALIDATION_ERROR') {
+    super(message, HttpStatus.UNPROCESSABLE_ENTITY, code);
   }
 }
 

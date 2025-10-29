@@ -11,7 +11,6 @@ import { appConfig, databaseConfig, jwtConfig, mailConfig, validate } from './co
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { EmailModule } from './modules/email/email.module';
-import { I18nConfigModule } from './common/i18n/i18n.module';
 
 // Guards
 import { JwtAuthGuard } from './modules/auth/guards';
@@ -51,8 +50,6 @@ import { AdminInitService } from './services/admin-init.service';
       },
     ]),
 
-    // I18n Module - Internationalization
-    I18nConfigModule,
 
     // Feature Modules
     AuthModule,

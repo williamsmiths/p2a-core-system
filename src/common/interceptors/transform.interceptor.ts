@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { I18nService } from 'nestjs-i18n';
 
 /**
  * Interface cho cấu trúc response chuẩn
@@ -25,7 +24,7 @@ export interface ApiResponse<T> {
  */
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
-  constructor(private readonly i18n: I18nService) {}
+  constructor() {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
     const ctx = context.switchToHttp();

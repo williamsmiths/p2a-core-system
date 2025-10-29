@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { I18nService } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { User, UserProfile, EmailVerification, RefreshToken } from '../../database/entities';
@@ -14,6 +13,7 @@ import {
   NotFoundException,
   ValidationException,
 } from '../../common/exceptions';
+import { ErrorCode } from '../../common';
 import { EmailVerificationStatus } from '../../common/enums';
 import { RegisterDto, LoginDto, VerifyEmailDto, RefreshTokenDto } from './dto';
 
@@ -36,7 +36,6 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private emailService: EmailService,
-    private i18n: I18nService,
   ) {}
 
   /**
@@ -51,7 +50,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException(this.i18n.translate('auth.email_already_exists'));
+      throw new ConflictException('Email này đã được sử dụng', ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
     }
 
     // Hash password
@@ -103,19 +102,19 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException(this.i18n.translate('auth.invalid_credentials'));
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng', ErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     // Kiểm tra tài khoản có bị khóa không
     if (!user.isActive) {
-      throw new UnauthorizedException(this.i18n.translate('auth.account_locked'));
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên', ErrorCode.AUTH_ACCOUNT_LOCKED);
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException(this.i18n.translate('auth.invalid_credentials'));
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng', ErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     // Cập nhật last login
@@ -128,10 +127,11 @@ export class AuthService {
 
     this.logger.log(`User logged in: ${email}`);
     // console.log('accessToken', accessToken);
-    // Không trả thông tin user trong response đăng nhập để tránh lộ dữ liệu nhạy cảm
+    
     return {
       accessToken,
       refreshToken,
+      role: user.role,
     };
   }
 
@@ -153,14 +153,14 @@ export class AuthService {
 
     // Kiểm tra token đã được sử dụng chưa
     if (verification.status === EmailVerificationStatus.USED) {
-      throw new ValidationException(this.i18n.translate('auth.token_used'));
+      throw new ValidationException('Token này đã được sử dụng', ErrorCode.AUTH_TOKEN_USED);
     }
 
     // Kiểm tra token hết hạn chưa
     if (verification.isExpired()) {
       verification.status = EmailVerificationStatus.EXPIRED;
       await this.emailVerificationsRepository.save(verification);
-      throw new ValidationException(this.i18n.translate('auth.token_expired'));
+      throw new ValidationException('Token xác thực đã hết hạn', ErrorCode.AUTH_TOKEN_EXPIRED);
     }
 
     // Cập nhật user
@@ -201,7 +201,7 @@ export class AuthService {
     }
 
     if (user.isEmailVerified) {
-      throw new ValidationException(this.i18n.translate('auth.email_already_verified'));
+      throw new ValidationException('Email đã được xác thực trước đó', ErrorCode.AUTH_EMAIL_ALREADY_VERIFIED);
     }
 
     // Vô hiệu hóa các token cũ
@@ -229,12 +229,12 @@ export class AuthService {
     });
 
     if (!refreshToken) {
-      throw new UnauthorizedException(this.i18n.translate('error.token_invalid'));
+      throw new UnauthorizedException('Token không hợp lệ', ErrorCode.AUTH_TOKEN_INVALID);
     }
 
     // Kiểm tra token có hợp lệ không
     if (!refreshToken.isValid()) {
-      throw new UnauthorizedException(this.i18n.translate('error.token_expired'));
+      throw new UnauthorizedException('Token đã hết hạn', ErrorCode.AUTH_TOKEN_EXPIRED);
     }
 
     // Generate access token mới
@@ -287,7 +287,7 @@ export class AuthService {
       await this.emailService.sendVerificationEmail(user.email, profile?.fullName || 'User', token);
     } catch (error) {
       this.logger.error('Failed to send verification email', error);
-      throw new ValidationException(this.i18n.translate('error.email_send_failed'));
+      throw new ValidationException('Không thể gửi email. Vui lòng thử lại sau', ErrorCode.EMAIL_SEND_FAILED);
     }
   }
 
