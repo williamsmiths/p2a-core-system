@@ -1,5 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, validateSync } from 'class-validator';
+import { BusinessException } from '../common/exceptions';
+import { ErrorCode } from '../common';
 
 enum Environment {
   Development = 'development',
@@ -122,9 +124,8 @@ export function validate(config: Record<string, unknown>) {
   });
 
   if (errors.length > 0) {
-    throw new Error(
-      `Environment validation failed:\n${errors.map((e) => Object.values(e.constraints || {}).join(', ')).join('\n')}`,
-    );
+    const details = errors.map((e) => Object.values(e.constraints || {}).join(', ')).join('\n');
+    throw new BusinessException(details, 500, ErrorCode.ENV_VALIDATION_ERROR);
   }
 
   return validatedConfig;

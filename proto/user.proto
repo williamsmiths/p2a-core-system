@@ -8,6 +8,7 @@ service UserService {
   rpc FindByEmail (UserByEmailRequest) returns (UserResponse) {}
   rpc ValidateUser (ValidateUserRequest) returns (UserResponse) {}
   rpc GetUsersByIds (UsersByIdsRequest) returns (UsersResponse) {}
+  rpc ValidateToken (ValidateTokenRequest) returns (UserResponse) {}
 }
 
 // Request Messages
@@ -25,6 +26,10 @@ message ValidateUserRequest {
 
 message UsersByIdsRequest {
   repeated string ids = 1;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
 }
 
 // Response Messages
