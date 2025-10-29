@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersController } from './users.controller';
 import { UsersGrpcController } from './users.grpc.controller';
 import { UsersService } from './users.service';
-import { User, UserProfile } from '../../database/entities';
+import { User, UserProfile } from '@entities';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, UserProfile]), JwtModule.register({})],

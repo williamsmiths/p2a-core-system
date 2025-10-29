@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSourceOptions } from 'typeorm';
-import { User, UserProfile, EmailVerification, RefreshToken } from '../database/entities';
+import { User, UserProfile, EmailVerification, RefreshToken } from '@entities';
 
 /**
  * Cấu hình Database với hỗ trợ PostgreSQL Master/Slave Replication

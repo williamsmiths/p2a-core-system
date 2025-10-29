@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { ErrorCode, ErrorCodeString } from '@common';
 
 /**
  * Global Exception Filter
@@ -22,9 +23,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Đã xảy ra lỗi trong quá trình xử lý';
-    let errors: any = null;
-    let code: string | undefined;
+    // Không trả errors ra ngoài response theo quy ước chỉ dùng Error Code
+    let hasValidationErrors: boolean = false;
+    let code: ErrorCodeString | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -32,17 +33,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       if (typeof exceptionResponse === 'object') {
         const responseObj = exceptionResponse as any;
-        message = responseObj.message || message;
-        errors = responseObj.errors || responseObj.error || null;
-        code = responseObj.code || code;
+        // Không sử dụng responseObj.errors/responseObj.error để trả về
+        code = (responseObj.code as ErrorCodeString) || code;
 
         // Xử lý validation errors từ class-validator
-        if (Array.isArray(message)) {
-          errors = message;
-          message = 'Dữ liệu không hợp lệ';
+        if (Array.isArray(responseObj?.message)) {
+          hasValidationErrors = true;
         }
-      } else {
-        message = exceptionResponse as string;
       }
     } else {
       // Log lỗi server nếu không phải HttpException
@@ -56,13 +53,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     // Nếu chưa có code, suy diễn từ HttpStatus
     if (!code) {
-      const statusName = HttpStatus[status] as unknown as string | undefined;
-      if (Array.isArray(errors)) {
-        code = 'VALIDATION_ERROR';
-      } else if (statusName) {
-        code = statusName;
+      if (hasValidationErrors) {
+        code = ErrorCode.VALIDATION_ERROR;
       } else {
-        code = 'ERROR';
+        // Map có kiểm soát từ HTTP status sang ErrorCode, mặc định INTERNAL_SERVER_ERROR
+        const statusToErrorCode: Record<number, ErrorCodeString> = {
+          [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
+          [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
+          [HttpStatus.NOT_FOUND]: ErrorCode.NOT_FOUND,
+          [HttpStatus.CONFLICT]: ErrorCode.CONFLICT,
+          [HttpStatus.INTERNAL_SERVER_ERROR]: ErrorCode.INTERNAL_SERVER_ERROR,
+        };
+        code = statusToErrorCode[status] || ErrorCode.INTERNAL_SERVER_ERROR;
       }
     }
 
@@ -70,7 +72,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       success: false,
       statusCode: status,
       code,
-      ...(errors && { errors }),
       timestamp: new Date().toISOString(),
       path: request.url,
     };
@@ -82,9 +83,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         JSON.stringify(errorResponse),
       );
     } else {
-      this.logger.warn(
-        `${request.method} ${request.url} - ${status}: ${message}`,
-      );
+      this.logger.warn(`${request.method} ${request.url} - ${status}`);
     }
 
     response.status(status).json(errorResponse);

@@ -1,7 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, validateSync } from 'class-validator';
 import { BusinessException } from '../common/exceptions';
-import { ErrorCode } from '../common';
+import { HttpStatus } from '@nestjs/common';
+import { ErrorCode } from '@common';
 
 enum Environment {
   Development = 'development',
@@ -124,8 +125,8 @@ export function validate(config: Record<string, unknown>) {
   });
 
   if (errors.length > 0) {
-    const details = errors.map((e) => Object.values(e.constraints || {}).join(', ')).join('\n');
-    throw new BusinessException(details, 500, ErrorCode.ENV_VALIDATION_ERROR);
+    // Không trả message; chỉ trả Error Code chuẩn
+    throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.ENV_VALIDATION_ERROR);
   }
 
   return validatedConfig;

@@ -2,10 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserProfile } from '../../database/entities';
+import { User, UserProfile } from '@entities';
 import { UpdateProfileDto, ChangePasswordDto } from './dto';
-import { NotFoundException, UnauthorizedException, ValidationException } from '../../common/exceptions';
-import { ErrorCode } from '../../common';
+import { NotFoundException, UnauthorizedException, ValidationException } from '@common';
+import { ErrorCode } from '@common';
 
 /**
  * Users Service - Xử lý logic liên quan đến user và profile
@@ -31,7 +31,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User', userId);
+      throw new NotFoundException();
     }
 
     // Không trả về password hash
@@ -51,7 +51,7 @@ export class UsersService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Profile', userId);
+      throw new NotFoundException();
     }
 
     // Cập nhật các field được cung cấp
@@ -77,21 +77,21 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User', userId);
+      throw new NotFoundException();
     }
 
     // Verify mật khẩu hiện tại
     const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Mật khẩu hiện tại không đúng', ErrorCode.USER_PASSWORD_INVALID);
+      throw new UnauthorizedException(ErrorCode.USER_PASSWORD_INVALID);
     }
 
     // Kiểm tra mật khẩu mới không được giống mật khẩu cũ
     const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
 
     if (isSamePassword) {
-      throw new ValidationException('Mật khẩu mới phải khác mật khẩu hiện tại', ErrorCode.USER_PASSWORD_SAME);
+      throw new ValidationException(ErrorCode.USER_PASSWORD_SAME);
     }
 
     // Hash mật khẩu mới
@@ -115,7 +115,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User', userId);
+      throw new NotFoundException();
     }
 
     // Không trả về password hash
@@ -165,7 +165,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User', userId);
+      throw new NotFoundException();
     }
 
     user.isActive = false;

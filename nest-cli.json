@@ -8,7 +8,6 @@
     "tsConfigPath": "tsconfig.json",
     "assets": [
       {
-        "include": "common/i18n/i18n/**/*",
         "outDir": "dist"
       }
     ]

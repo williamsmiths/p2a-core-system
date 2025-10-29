@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UnauthorizedException } from '../../../common/exceptions';
+import { ErrorCode, UnauthorizedException } from '@common';
 
 /**
  * Interface cho JWT payload
@@ -34,7 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    */
   async validate(payload: JwtPayload) {
     if (!payload.sub) {
-      throw new UnauthorizedException('Token không hợp lệ');
+      throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID);
     }
 
     // Return object này sẽ được gắn vào request.user

@@ -4,7 +4,7 @@ import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
 import { UnauthorizedException, NotFoundException, ForbiddenException } from '../../common/exceptions';
-import { ErrorCode } from '../../common';
+import { ErrorCode } from '@common';
 
 /**
  * gRPC Controller cho User Service

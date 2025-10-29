@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { User, UserProfile, EmailVerification, RefreshToken } from '../../database/entities';
+import { User, UserProfile, EmailVerification, RefreshToken } from '@entities';
 import { EmailService } from '../email/email.service';
 import {
   ConflictException,
@@ -13,7 +13,7 @@ import {
   NotFoundException,
   ValidationException,
 } from '../../common/exceptions';
-import { ErrorCode } from '../../common';
+import { ErrorCode } from '@common';
 import { EmailVerificationStatus } from '../../common/enums';
 import { RegisterDto, LoginDto, VerifyEmailDto, RefreshTokenDto } from './dto';
 
@@ -50,7 +50,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('Email này đã được sử dụng', ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
+      throw new ConflictException(ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
     }
 
     // Hash password
@@ -102,19 +102,19 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng', ErrorCode.AUTH_INVALID_CREDENTIALS);
+      throw new UnauthorizedException(ErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     // Kiểm tra tài khoản có bị khóa không
     if (!user.isActive) {
-      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên', ErrorCode.AUTH_ACCOUNT_LOCKED);
+      throw new UnauthorizedException(ErrorCode.AUTH_ACCOUNT_LOCKED);
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng', ErrorCode.AUTH_INVALID_CREDENTIALS);
+      throw new UnauthorizedException(ErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     // Cập nhật last login
@@ -148,19 +148,19 @@ export class AuthService {
     });
 
     if (!verification) {
-      throw new NotFoundException('Token', token);
+      throw new NotFoundException();
     }
 
     // Kiểm tra token đã được sử dụng chưa
     if (verification.status === EmailVerificationStatus.USED) {
-      throw new ValidationException('Token này đã được sử dụng', ErrorCode.AUTH_TOKEN_USED);
+      throw new ValidationException(ErrorCode.AUTH_TOKEN_USED);
     }
 
     // Kiểm tra token hết hạn chưa
     if (verification.isExpired()) {
       verification.status = EmailVerificationStatus.EXPIRED;
       await this.emailVerificationsRepository.save(verification);
-      throw new ValidationException('Token xác thực đã hết hạn', ErrorCode.AUTH_TOKEN_EXPIRED);
+      throw new ValidationException(ErrorCode.AUTH_TOKEN_EXPIRED);
     }
 
     // Cập nhật user
@@ -197,11 +197,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User', email);
+      throw new NotFoundException();
     }
 
     if (user.isEmailVerified) {
-      throw new ValidationException('Email đã được xác thực trước đó', ErrorCode.AUTH_EMAIL_ALREADY_VERIFIED);
+      throw new ValidationException(ErrorCode.AUTH_EMAIL_ALREADY_VERIFIED);
     }
 
     // Vô hiệu hóa các token cũ
@@ -229,12 +229,12 @@ export class AuthService {
     });
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Token không hợp lệ', ErrorCode.AUTH_TOKEN_INVALID);
+      throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID);
     }
 
     // Kiểm tra token có hợp lệ không
     if (!refreshToken.isValid()) {
-      throw new UnauthorizedException('Token đã hết hạn', ErrorCode.AUTH_TOKEN_EXPIRED);
+      throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_EXPIRED);
     }
 
     // Generate access token mới
@@ -287,7 +287,7 @@ export class AuthService {
       await this.emailService.sendVerificationEmail(user.email, profile?.fullName || 'User', token);
     } catch (error) {
       this.logger.error('Failed to send verification email', error);
-      throw new ValidationException('Không thể gửi email. Vui lòng thử lại sau', ErrorCode.EMAIL_SEND_FAILED);
+      throw new ValidationException(ErrorCode.EMAIL_SEND_FAILED);
     }
   }
 
