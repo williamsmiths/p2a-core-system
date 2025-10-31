@@ -11,6 +11,7 @@ import { appConfig, databaseConfig, jwtConfig, mailConfig, validate } from './co
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { EmailModule } from './modules/email/email.module';
+import { MasterDataModule } from './modules/master-data/master-data.module';
 
 // Guards
 import { JwtAuthGuard } from './modules/auth/guards';
@@ -55,6 +56,7 @@ import { AdminInitService } from './services/admin-init.service';
     AuthModule,
     UsersModule,
     EmailModule,
+    MasterDataModule,
   ],
   controllers: [HealthController],
   providers: [

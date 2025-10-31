@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSourceOptions } from 'typeorm';
-import { User, UserProfile, EmailVerification, RefreshToken } from '@entities';
+import { User, UserProfile, EmailVerification, RefreshToken, Country, City, District } from '@entities';
 
 /**
  * Cấu hình Database với hỗ trợ PostgreSQL Master/Slave Replication
@@ -19,7 +19,7 @@ export default registerAs(
     // Cấu hình cơ bản cho cả master và slave
     const baseConfig = {
       type: 'postgres' as const,
-      entities: [User, UserProfile, EmailVerification, RefreshToken],
+      entities: [User, UserProfile, EmailVerification, RefreshToken, Country, City, District],
       synchronize: process.env.DB_SYNCHRONIZE === 'true',
       logging: process.env.DB_LOGGING === 'true',
       extra: {
